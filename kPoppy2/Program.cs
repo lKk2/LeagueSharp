@@ -198,12 +198,12 @@ namespace kPoppy2
                                  let prediction = _e.GetPrediction(hero)
                                  where NavMesh.GetCollisionFlags(
                                      prediction.Position.To2D()
-                                         .Extend(ObjectManager.Player.ServerPosition.To2D(), -300)
+                                         .Extend(ObjectManager.Player.ServerPosition.To2D(), -450)
                                          .To3D())
                                      .HasFlag(CollisionFlags.Wall) || NavMesh.GetCollisionFlags(
                                          prediction.Position.To2D()
                                              .Extend(ObjectManager.Player.ServerPosition.To2D(),
-                                                 -(300 / 2))
+                                                 -(450 / 2))
                                              .To3D())
                                          .HasFlag(CollisionFlags.Wall)
                                  select hero)
