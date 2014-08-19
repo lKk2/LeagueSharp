@@ -1,0 +1,11 @@
+E:\Coding\Projects\kPoppy2\kPoppy2\bin\Debug\kPoppy2.exe.config
+E:\Coding\Projects\kPoppy2\kPoppy2\bin\Debug\kPoppy2.exe
+E:\Coding\Projects\kPoppy2\kPoppy2\bin\Debug\kPoppy2.pdb
+E:\Coding\Projects\kPoppy2\kPoppy2\bin\Debug\LeagueSharp.Common.dll
+E:\Coding\Projects\kPoppy2\kPoppy2\bin\Debug\LeagueSharp.dll
+E:\Coding\Projects\kPoppy2\kPoppy2\bin\Debug\SharpDX.dll
+E:\Coding\Projects\kPoppy2\kPoppy2\bin\Debug\SharpDX.Direct3D9.dll
+E:\Coding\Projects\kPoppy2\kPoppy2\bin\Debug\LeagueSharp.xml
+E:\Coding\Projects\kPoppy2\kPoppy2\obj\Debug\kPoppy2.csprojResolveAssemblyReference.cache
+E:\Coding\Projects\kPoppy2\kPoppy2\obj\Debug\kPoppy2.exe
+E:\Coding\Projects\kPoppy2\kPoppy2\obj\Debug\kPoppy2.pdb

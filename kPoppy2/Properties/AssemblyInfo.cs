@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("kPoppy")]
+[assembly: AssemblyTitle("kPoppy2")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("kPoppy")]
+[assembly: AssemblyProduct("kPoppy2")]
 [assembly: AssemblyCopyright("Copyright ©  2014")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("2c2f1847-8e74-43cc-a837-5a0a849c7d24")]
+[assembly: Guid("51595d49-ad6e-45b4-b081-c19cfc48efc1")]
 
 // Version information for an assembly consists of the following four values:
 //
