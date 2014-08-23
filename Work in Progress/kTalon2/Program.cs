@@ -64,6 +64,12 @@ namespace kTalon2
 
 
             // Combo
+            _config.AddSubMenu(new Menu("Combo", "combo"));
+            _config.SubMenu("combo").AddItem(new MenuItem("useQ", "Use Q").SetValue(true));
+            _config.SubMenu("combo").AddItem(new MenuItem("useW", "Use W").SetValue(true));
+            _config.SubMenu("combo").AddItem(new MenuItem("useE", "Use E").SetValue(true));
+            _config.SubMenu("combo").AddItem(new MenuItem("useR", "Use R").SetValue(true));
+
             
             // Harrass
             _config.AddSubMenu(new Menu("Harras", "harras"));
@@ -77,15 +83,18 @@ namespace kTalon2
             _config.SubMenu("laneclear").AddItem(new MenuItem("WonCreep", "use W").SetValue(true));
 
             // Last Hit
-            _config.AddSubMenu(new Menu("Last H1t", "lasthit"));
-            _config.SubMenu("lasthit").AddItem(new MenuItem("QkillCreep", "Use Q to FARM").SetValue(false));
-            _config.SubMenu("lasthit").AddItem(new MenuItem("ManatoCreep", "> Mana Percent to Farm").SetValue(new Slider(30,0,100)));
+            _config.AddSubMenu(new Menu("Last Hit", "lasthit"));
+           // _config.SubMenu("lasthit").AddItem(new MenuItem("QkillCreep", "Use Q to FARM").SetValue(false)); ~ not yet
+           // _config.SubMenu("lasthit").AddItem(new MenuItem("ManatoCreep", "> Mana Percent to Farm").SetValue(new Slider(30,0,100))); ~ not yet
 
             // KS
             _config.AddSubMenu(new Menu("KS", "ks"));
+            _config.SubMenu("ks").AddItem(new MenuItem("WtoKill", "Use W on Killable Targets").SetValue(true));
+            _config.SubMenu("ks").AddItem(new MenuItem("IgtoKill", "Use Ignite on Killable Targets").SetValue(true));
 
             // Drawning
             _config.AddSubMenu(new Menu("Drawning", "drawning"));
+            _config.SubMenu("drawning").AddItem(new MenuItem("DrawW", "Draw W Range").SetValue(true));
 
             _config.AddToMainMenu(); // add everything
             #endregion
@@ -98,15 +107,19 @@ namespace kTalon2
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            Utility.DrawCircle(Player.Position, _w.Range, Color.Blue);
+            if (_config.SubMenu("drawning").Item("DrawW").GetValue<bool>())
+            {
+                Utility.DrawCircle(Player.Position, _w.Range, Color.Blue);    
+            }
         }
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
             if (Player.IsDead) return;
+            Ks();
             if (_orbwalker.ActiveMode.ToString() == "Combo")
             {
-                
+                Combo();
             }
             if (_orbwalker.ActiveMode.ToString() == "Mixed")
             {
@@ -119,7 +132,7 @@ namespace kTalon2
             }
             if (_orbwalker.ActiveMode.ToString() == "LastHit")
             {
-                LastHit();
+                //LastHit(); not yet~
             }
 
         }
@@ -132,8 +145,8 @@ namespace kTalon2
             if (mobs.Count > 0)
             {
                 if (_config.SubMenu("laneclear").Item("WonCreep").GetValue<bool>() && _w.IsReady())
-                    _w.Cast(mobs[0]);
-                if (_config.SubMenu("laneclear").Item("QonCreep").GetValue<bool>() && _w.IsReady())
+                    _w.Cast(_w.GetLineFarmLocation(mobs).Position.To3D());
+                if (_config.SubMenu("laneclear").Item("QonCreep").GetValue<bool>() && _q.IsReady())
                     _q.Cast(mobs[0]);
             }
         }
@@ -166,14 +179,73 @@ namespace kTalon2
 
         }
         #endregion
+        #region combo
+
+        private static void Combo()
+        {
+            var target = SimpleTs.GetTarget(_w.Range, SimpleTs.DamageType.Physical);
+
+            if (_config.SubMenu("combo").Item("useE").GetValue<bool>() && _e.IsReady())
+            {
+                _e.CastOnUnit(target, false);
+            }
+            if (_config.SubMenu("combo").Item("useW").GetValue<bool>() && _w.IsReady())
+            {
+                _w.CastOnUnit(target, false);
+            }
+            if (_config.SubMenu("combo").Item("useQ").GetValue<bool>() && _q.IsReady())
+            {
+                _q.CastOnUnit(target, false);
+            }
+            if (_tmt.IsReady())
+            {
+                _tmt.Cast(target);
+            }
+            if (_rah.IsReady())
+            {
+                _rah.Cast(target);
+            }
+            if (DamageLib.getDmg(target, DamageLib.SpellType.R) >= target.Health &&
+                _config.SubMenu("combo").Item("useR").GetValue<bool>() && _r.IsReady())
+            {
+                _r.CastOnUnit(target, false);
+            }
+
+        }
+        #endregion
 
         #region Last Hit
 
         private static void LastHit()
         {
-            var mana = (Player.Mana / Player.MaxMana).ToString("N");
+            var mana = (Player.Mana / Player.MaxMana).ToString("N1");
             var manatocast = _config.SubMenu("lasthit").Item("ManatoCreep").GetValue<Slider>().Value;
             Game.PrintChat(mana + " / " + manatocast); // getting values test ~
+            
+        }
+        #endregion
+
+        #region KS
+
+        private static void Ks()
+        {
+            if (_config.SubMenu("ks").Item("WtoKill").GetValue<bool>() || _config.SubMenu("ks").Item("IgtoKill").GetValue<bool>())
+            {
+                foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(hero => hero.IsValidTarget(_w.Range)))
+                {
+                    if (_w.IsReady() && hero.Distance(Player) <= _w.Range &&
+                        DamageLib.getDmg(hero, DamageLib.SpellType.W) >= hero.Health)
+                    {
+                        _w.CastOnUnit(hero, false);
+                    }
+                    if (_igniteSlot != SpellSlot.Unknown &&
+                        Player.SummonerSpellbook.CanUseSpell(_igniteSlot) == SpellState.Ready &&
+                        Player.Distance(hero) < 600 && DamageLib.getDmg(hero, DamageLib.SpellType.IGNITE) > hero.Health)
+                    {
+                        Player.SummonerSpellbook.CastSpell(_igniteSlot, hero);
+                    }
+                }
+            }
         }
         #endregion
     }
