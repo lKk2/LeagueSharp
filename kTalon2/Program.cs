@@ -19,7 +19,7 @@ namespace kTalon2
         private static readonly Obj_AI_Hero Player = ObjectManager.Player;
         private static Orbwalking.Orbwalker _orbwalker;
         private static Menu _config;
-        private static Items.Item _tmt, _rah;
+        private static Items.Item _tmt, _rah, _gbd;
         private static SpellSlot _igniteSlot;
 
         private static void Main(string[] args)
@@ -36,6 +36,7 @@ namespace kTalon2
             _igniteSlot = ObjectManager.Player.GetSpellSlot("SummonerDot");
             _tmt = new Items.Item(3077, 400f); // tiamat
             _rah = new Items.Item(3074, 400f); // hydra
+            _gbd = new Items.Item(3142, 0f); // Youmuu's Ghostblade
 
             _q = new Spell(SpellSlot.Q, 250f);
             _w = new Spell(SpellSlot.W, 600f);
@@ -76,20 +77,27 @@ namespace kTalon2
             _config.SubMenu("harras").AddItem(new MenuItem("QonPlayer", "Use Q").SetValue(true));
             _config.SubMenu("harras").AddItem(new MenuItem("WonPlayer", "Use W").SetValue(true));
             _config.SubMenu("harras").AddItem(new MenuItem("EonPlayer", "Use E").SetValue(false));
+            _config.SubMenu("harras").AddItem(new MenuItem("ManatoHarras", "> Mana Percent to UseSKill").SetValue(new Slider(30, 0, 100)));
 
             // Lane Clear
             _config.AddSubMenu(new Menu("Lane Clear", "laneclear"));
             _config.SubMenu("laneclear").AddItem(new MenuItem("QonCreep", "use Q").SetValue(true));
             _config.SubMenu("laneclear").AddItem(new MenuItem("WonCreep", "use W").SetValue(true));
+            _config.SubMenu("laneclear").AddItem(new MenuItem("ManatoCreep", "> Mana Percent to LaneClear").SetValue(new Slider(30, 0, 100)));
 
             // Last Hit
-            _config.AddSubMenu(new Menu("Last Hit", "lasthit"));
+           // _config.AddSubMenu(new Menu("Last Hit", "lasthit"));
            // _config.SubMenu("lasthit").AddItem(new MenuItem("QkillCreep", "Use Q to FARM").SetValue(false)); ~ not yet
            // _config.SubMenu("lasthit").AddItem(new MenuItem("ManatoCreep", "> Mana Percent to Farm").SetValue(new Slider(30,0,100))); ~ not yet
 
+            //Items
+            _config.AddSubMenu(new Menu("Items", "items"));
+            _config.SubMenu("items").AddItem(new MenuItem("useHydra", "Use Hydra").SetValue(true));
+            _config.SubMenu("items").AddItem(new MenuItem("useGhost", "Use GhostBlade").SetValue(true));
+
             // KS
             _config.AddSubMenu(new Menu("KS", "ks"));
-            _config.SubMenu("ks").AddItem(new MenuItem("WtoKill", "Use W on Killable Targets").SetValue(true));
+            _config.SubMenu("ks").AddItem(new MenuItem("RtoKill", "Use R on Killable Targets").SetValue(true));
             _config.SubMenu("ks").AddItem(new MenuItem("IgtoKill", "Use Ignite on Killable Targets").SetValue(true));
 
             // Drawning
@@ -139,6 +147,8 @@ namespace kTalon2
         #region LaneClear
         private static void Clear()
         {
+            if (Player.Mana/Player.MaxMana * 100 < _config.SubMenu("laneclear").Item("ManatoCreep").GetValue<Slider>().Value) return;
+
             var mobs = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, _w.Range, MinionTypes.All,
                 MinionTeam.Enemy, MinionOrderTypes.MaxHealth); // not ideal at ALL need to make a MEC to calc mobs around to use W not only 1 target when have >1~
 
@@ -148,6 +158,17 @@ namespace kTalon2
                     _w.Cast(_w.GetLineFarmLocation(mobs).Position.To3D());
                 if (_config.SubMenu("laneclear").Item("QonCreep").GetValue<bool>() && _q.IsReady())
                     _q.Cast(mobs[0]);
+                if (_config.SubMenu("items").Item("useHydra").GetValue<bool>())
+                {
+                    if (_rah.IsReady())
+                    {
+                        _rah.Cast(mobs[0]);
+                    }
+                    if (_tmt.IsReady())
+                    {
+                        _tmt.Cast(mobs[0]);
+                    }
+                }
             }
         }
         #endregion
@@ -155,6 +176,8 @@ namespace kTalon2
         #region Harass
         private static void Mixed()
         {
+            if (Player.Mana / Player.MaxMana * 100 < _config.SubMenu("harras").Item("ManatoHarras").GetValue<Slider>().Value) return;
+
             var target = SimpleTs.GetTarget(_w.Range, SimpleTs.DamageType.Physical);
             if (_config.SubMenu("harras").Item("WonPlayer").GetValue<bool>() && _w.IsReady())
             {
@@ -168,15 +191,17 @@ namespace kTalon2
             {
                 _q.Cast(target);
             }
-            if (_tmt.IsReady())
+            if (_config.SubMenu("items").Item("useHydra").GetValue<bool>())
             {
-                _tmt.Cast(target);
+                if (_tmt.IsReady())
+                {
+                    _tmt.Cast(target);
+                }
+                if (_rah.IsReady())
+                {
+                    _rah.Cast(target);
+                }
             }
-            if (_rah.IsReady())
-            {
-                _rah.Cast(target);
-            }
-
         }
         #endregion
         #region combo
@@ -189,6 +214,8 @@ namespace kTalon2
             {
                 _e.CastOnUnit(target, false);
             }
+            if (_config.SubMenu("items").Item("useGhost").GetValue<bool>() && _gbd.IsReady())
+                _gbd.Cast();
             if (_config.SubMenu("combo").Item("useW").GetValue<bool>() && _w.IsReady())
             {
                 _w.CastOnUnit(target, false);
@@ -197,16 +224,18 @@ namespace kTalon2
             {
                 _q.CastOnUnit(target, false);
             }
-            if (_tmt.IsReady())
+            if (_config.SubMenu("items").Item("useHydra").GetValue<bool>())
             {
-                _tmt.Cast(target);
+                if (_tmt.IsReady())
+                {
+                    _tmt.Cast(target);
+                }
+                if (_rah.IsReady())
+                {
+                    _rah.Cast(target);
+                }
             }
-            if (_rah.IsReady())
-            {
-                _rah.Cast(target);
-            }
-            if (DamageLib.getDmg(target, DamageLib.SpellType.R) >= target.Health &&
-                _config.SubMenu("combo").Item("useR").GetValue<bool>() && _r.IsReady())
+            if (_config.SubMenu("combo").Item("useR").GetValue<bool>() && _r.IsReady())
             {
                 _r.CastOnUnit(target, false);
             }
@@ -214,29 +243,18 @@ namespace kTalon2
         }
         #endregion
 
-        #region Last Hit
-
-        private static void LastHit()
-        {
-            var mana = (Player.Mana / Player.MaxMana).ToString("N1");
-            var manatocast = _config.SubMenu("lasthit").Item("ManatoCreep").GetValue<Slider>().Value;
-            Game.PrintChat(mana + " / " + manatocast); // getting values test ~
-            
-        }
-        #endregion
-
         #region KS
 
         private static void Ks()
         {
-            if (_config.SubMenu("ks").Item("WtoKill").GetValue<bool>() || _config.SubMenu("ks").Item("IgtoKill").GetValue<bool>())
+            if (_config.SubMenu("ks").Item("RtoKill").GetValue<bool>() || _config.SubMenu("ks").Item("IgtoKill").GetValue<bool>())
             {
                 foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(hero => hero.IsValidTarget(_w.Range)))
                 {
-                    if (_w.IsReady() && hero.Distance(Player) <= _w.Range &&
-                        DamageLib.getDmg(hero, DamageLib.SpellType.W) >= hero.Health)
+                    if (_r.IsReady() && hero.Distance(Player) <= _r.Range &&
+                        DamageLib.getDmg(hero, DamageLib.SpellType.R) >= hero.Health)
                     {
-                        _w.CastOnUnit(hero, false);
+                        _r.CastOnUnit(hero, false);
                     }
                     if (_igniteSlot != SpellSlot.Unknown &&
                         Player.SummonerSpellbook.CanUseSpell(_igniteSlot) == SpellState.Ready &&
