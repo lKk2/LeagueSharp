@@ -47,8 +47,8 @@ namespace kTalon2
             // fine tune of spells~
 
 
-            _w.SetSkillshot(5f, 0f, 902f, false, Prediction.SkillshotType.SkillshotCone);
-            _r.SetSkillshot(5f, 650f, 650f, false, Prediction.SkillshotType.SkillshotCircle);
+            _w.SetSkillshot(5f, 0f, 902f, false, SkillshotType.SkillshotCone);
+            _r.SetSkillshot(5f, 650f, 650f, false, SkillshotType.SkillshotCircle);
             Spellist.AddRange(new[] { _q, _w, _e, _r });
 
             #endregion
