@@ -70,6 +70,7 @@ namespace kTalon2
             _config.SubMenu("combo").AddItem(new MenuItem("useW", "Use W").SetValue(true));
             _config.SubMenu("combo").AddItem(new MenuItem("useE", "Use E").SetValue(true));
             _config.SubMenu("combo").AddItem(new MenuItem("useR", "Use R").SetValue(true));
+            _config.SubMenu("combo").AddItem(new MenuItem("MinR", "Min R Targets").SetValue(new Slider(1, 1, 5)));
 
             
             // Harrass
@@ -109,6 +110,7 @@ namespace kTalon2
 
             Game.OnGameUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
+            Game.OnGameSendPacket += Game_OnGameSendPacket;
             Game.PrintChat("kTalon2 Loaded :}");
             
         }
@@ -235,7 +237,7 @@ namespace kTalon2
                     _rah.Cast(target);
                 }
             }
-            if (_config.SubMenu("combo").Item("useR").GetValue<bool>() && _r.IsReady())
+            if (_config.SubMenu("combo").Item("useR").GetValue<bool>() && _r.IsReady() && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(_r.Range)) >= _config.SubMenu("combo").Item("MinR").GetValue<Slider>().Value)
             {
                 _r.CastOnUnit(target, false);
             }
@@ -266,5 +268,22 @@ namespace kTalon2
             }
         }
         #endregion
+
+        private static void Game_OnGameSendPacket(GamePacketEventArgs args) // thanks TC-CREW
+        {
+            if (args.PacketData[0] != Packet.C2S.Cast.Header) return;
+
+            var decodedPacket = Packet.C2S.Cast.Decoded(args.PacketData);
+            if (decodedPacket.SourceNetworkId != ObjectManager.Player.NetworkId || decodedPacket.Slot != SpellSlot.R)
+                return;
+
+            if (
+                ObjectManager.Get<Obj_AI_Hero>()
+                    .Count(
+                        hero =>
+                            hero.IsValidTarget() &&
+                            hero.Distance(new Vector2(decodedPacket.ToX, decodedPacket.ToY)) <= _r.Range) == 0)
+                args.Process = false;
+        }
     }
 }
