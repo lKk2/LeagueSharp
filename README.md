@@ -3,7 +3,9 @@ LeagueSharp
 
 kPoppy2
 
-Initicial Release of my Jungle Poppy (:
+- Initicial Release of my Jungle Poppy (:
+- Smart KS, Harras, Ult Logic on Tanker or Support
+- Full Combo
 
 ===========
 
