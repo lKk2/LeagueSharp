@@ -52,6 +52,7 @@ namespace kPoppy2
             _config.SubMenu("Combo").AddItem(new MenuItem("ComboR", "Use R").SetValue(true));
             _config.SubMenu("Combo")
                 .AddItem(new MenuItem("ComboActive", "Combo KEY").SetValue(new KeyBind(32, KeyBindType.Press)));
+            _config.SubMenu("Combo").AddItem(new MenuItem("qtdR", "Minium R Logic").SetValue(new Slider(2, 1, 5)));
 
             // Harass Mode
             _config.AddSubMenu(new Menu("Harass", "Harass"));
@@ -160,9 +161,9 @@ namespace kPoppy2
             var target = SimpleTs.GetTarget(_e.Range, SimpleTs.DamageType.Physical);
             if (target == null) return;
 
-            if (useR)
+            if (useR && ObjectManager.Get<Obj_AI_Hero>().Count(hero => hero.IsValidTarget(_r.Range)) >= _config.Item("qtdR").GetValue<Slider>().Value)
             {
-                _r.Cast(target);
+                UltOp();
             }
             if (useE)
             {
@@ -177,6 +178,26 @@ namespace kPoppy2
             {
                 _q.Cast(target);
             }
+        }
+
+        private static void UltOp()
+        {
+            Obj_AI_Hero newtarget = null;
+            foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(hero => hero.IsValidTarget(_r.Range)))
+            {
+                if (newtarget == null)
+                {
+                    newtarget = hero;
+                }
+                else
+                {
+                    if (hero.Health > newtarget.Health && hero.BaseAttackDamage < newtarget.BaseAttackDamage)
+                    {
+                        newtarget = hero;
+                    }
+                }
+            }
+            _r.CastOnUnit(newtarget, true);
         }
 
         private static void Killsteal()
@@ -197,11 +218,11 @@ namespace kPoppy2
             foreach (var hero in from hero in ObjectManager.Get<Obj_AI_Hero>().Where(hero => hero.IsValidTarget(_e.Range))
                                  let prediction = _e.GetPrediction(hero)
                                  where NavMesh.GetCollisionFlags(
-                                     prediction.Position.To2D()
+                                     prediction.UnitPosition.To2D()
                                          .Extend(ObjectManager.Player.ServerPosition.To2D(), -450)
                                          .To3D())
                                      .HasFlag(CollisionFlags.Wall) || NavMesh.GetCollisionFlags(
-                                         prediction.Position.To2D()
+                                         prediction.UnitPosition.To2D()
                                              .Extend(ObjectManager.Player.ServerPosition.To2D(),
                                                  -(450 / 2))
                                              .To3D())
