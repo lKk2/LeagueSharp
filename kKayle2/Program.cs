@@ -52,14 +52,25 @@ namespace kKayle2
            _config.SubMenu("combo").AddItem(new MenuItem("useQ", "Use Q").SetValue(true));
            _config.SubMenu("combo").AddItem(new MenuItem("useW", "Use W").SetValue(true));
            _config.SubMenu("combo").AddItem(new MenuItem("useE", "Use E").SetValue(true));
-           _config.SubMenu("combo").AddItem(new MenuItem("useR", "Use R").SetValue(true));
-           _config.SubMenu("combo").AddItem(new MenuItem("useRpct", "Life to Use ULT").SetValue(new Slider(30, 0, 100)));
 
            //Healing
            _config.AddSubMenu(new Menu("Healing", "healing"));
            _config.SubMenu("healing").AddItem(new MenuItem("selfW", "Self Heal Percent").SetValue(true));
+           _config.SubMenu("healing").AddItem(new MenuItem("allyW", "Heal Ally Percent").SetValue(true));
            _config.SubMenu("healing")
-               .AddItem(new MenuItem("hpWpercent", "Percentage of Self Heal").SetValue(new Slider(60, 0, 100)));
+               .AddItem(new MenuItem("hpWpercent", "Percentage of Heal").SetValue(new Slider(50, 0, 100)));
+
+           //Ult
+           _config.AddSubMenu(new Menu("Ult", "ult"));
+           _config.SubMenu("ult").AddItem(new MenuItem("selfR", "Self Ult").SetValue(true));
+           _config.SubMenu("ult").AddItem(new MenuItem("allyR", "Ally Ult").SetValue(true));
+           _config.SubMenu("ult").AddItem(new MenuItem("useRpct", "Life to Use ULT").SetValue(new Slider(20, 0, 100)));
+
+           //Harras
+           _config.AddSubMenu(new Menu("Harras", "harras"));
+           _config.SubMenu("harass").AddItem(new MenuItem("useQ", "Use Q").SetValue(true));
+           _config.SubMenu("harras").AddItem(new MenuItem("useE", "Use E").SetValue(true));
+           _config.SubMenu("harras").AddItem(new MenuItem("mppc", "Mana to Harras").SetValue(new Slider(40, 0, 100)));
 
            //Ks
            _config.AddSubMenu(new Menu("KS", "ks"));
@@ -90,13 +101,14 @@ namespace kKayle2
        {
            if (Player.IsDead) return;
            AutoBots();
+           Test();
            if (_orbwalker.ActiveMode.ToString() == "Combo")
            {
               Combo();
            }
            if (_orbwalker.ActiveMode.ToString() == "Mixed")
            {
-              // Mixed();
+              Mixed();
            }
 
            if (_orbwalker.ActiveMode.ToString() == "LaneClear")
@@ -110,9 +122,26 @@ namespace kKayle2
 
        }
 
+       private static void Mixed()
+       {
+           var target = SimpleTs.GetTarget(_q.Range, SimpleTs.DamageType.Magical);
+           if (_config.SubMenu("harras").Item("useQ").GetValue<bool>() &&
+               (Player.Mana / Player.MaxMana) * 100 >= _config.SubMenu("harras").Item("mppc").GetValue<Slider>().Value &&
+               _q.IsReady())
+           {
+               _q.Cast(target);
+           }
+           if (_config.SubMenu("harras").Item("useE").GetValue<bool>() &&
+               (Player.Mana / Player.MaxMana) * 100 >= _config.SubMenu("harras").Item("mppc").GetValue<Slider>().Value &&
+               _e.IsReady() && Utility.CountEnemysInRange(650) > 0)
+           {
+               _e.Cast();
+           }
+       }
+
        private static void Clear()
        {
-           if (MinionManager.GetMinions(Player.ServerPosition, 650f).Count > 0 && _e.IsReady())
+           if (MinionManager.GetMinions(Player.ServerPosition, 650f, MinionTypes.All, MinionTeam.Enemy).Count > 0 || _e.IsReady() && MinionManager.GetMinions(Player.ServerPosition, 650f, MinionTypes.All, MinionTeam.Neutral).Count > 0)
            {
                _e.Cast();
            }
@@ -125,16 +154,16 @@ namespace kKayle2
            {
                _q.Cast(target);
            }
-           if (_config.SubMenu("combo").Item("useE").GetValue<bool>() && _e.IsReady())
+           if (_config.SubMenu("combo").Item("useE").GetValue<bool>() && _e.IsReady() && Utility.CountEnemysInRange(650) > 0)
            {
                _e.Cast();
            }
            if (_config.SubMenu("combo").Item("useW").GetValue<bool>() && (Player.Health / Player.MaxHealth) * 100 >=
-               _config.SubMenu("healing").Item("hpWpercent").GetValue<Slider>().Value && _w.IsReady())
+               _config.SubMenu("healing").Item("hpWpercent").GetValue<Slider>().Value && _w.IsReady() && Utility.CountEnemysInRange(650) > 0)
            {
                _w.Cast(Player);
            }
-           if (_config.SubMenu("combo").Item("useR").GetValue<bool>() && (Player.Health / Player.MaxHealth) * 100 <= _config.SubMenu("combo").Item("useRpct").GetValue<Slider>().Value && _r.IsReady() && Utility.CountEnemysInRange(650) > 0)
+           if (_config.SubMenu("ult").Item("selfR").GetValue<bool>() && (Player.Health / Player.MaxHealth) * 100 <= _config.SubMenu("ult").Item("useRpct").GetValue<Slider>().Value && _r.IsReady() && Utility.CountEnemysInRange(650) > 0)
            {
                _r.Cast(Player);
            }
@@ -155,6 +184,23 @@ namespace kKayle2
                    {
                        _q.Cast(hero);
                    }
+               }
+           }
+       }
+
+       private static void Test()
+       {
+           foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(hero => hero.IsAlly))
+           {
+               if ((hero.Health / hero.MaxHealth) * 100 <= _config.SubMenu("ult").Item("useRpct").GetValue<Slider>().Value && _r.IsReady() && Utility.CountEnemysInRange(1000) > 0 && hero.Distance(Player.ServerPosition) <= _r.Range && _config.SubMenu("ult").Item("allyR").GetValue<bool>())
+               {
+                   _r.Cast(hero);
+               }
+               if ((hero.Health / hero.MaxHealth) * 100 <=
+                   _config.SubMenu("healing").Item("hpWpercent").GetValue<Slider>().Value && _config.SubMenu("healing").Item("allyW").GetValue<bool>() && _w.IsReady() &&
+                   ObjectManager.Player.Spellbook.IsCastingSpell == false && hero.Distance(Player.ServerPosition) <= _w.Range)
+               {
+                   _w.Cast(hero);
                }
            }
        }
